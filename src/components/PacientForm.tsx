@@ -2,19 +2,41 @@ import { useForm } from "react-hook-form"
 import { Error } from "./Error"
 import type { DraftPatient } from "../types"
 import { usePatientStore } from "../store"
+import { useEffect } from "react"
 
 export default function PatientForm() {
 
 
-    const {addPatient} = usePatientStore()
+    const { addPatient, activeID, patients, updatePatient } = usePatientStore()
     // const addPatient = usePatientStore(state=>state.addPatient) lo mismo que arriba pero diferente sintaxis
 
-    const { register, handleSubmit, formState: { errors } } = useForm<DraftPatient>()
+    const { register, handleSubmit, setValue, formState: { errors }, reset } = useForm<DraftPatient>()
+
+
+    useEffect(() => {
+        if (activeID) {
+            const activePatient = patients.filter(patient => patient.id === activeID)[0]
+            setValue('name', activePatient.name)
+            setValue('caretaker', activePatient.caretaker)
+            setValue('date', activePatient.date)
+            setValue('email', activePatient.email)
+            setValue('symptoms', activePatient.symptoms)
+        }
+    }, [activeID]) // al editar esto, rellena el formulario para editar
+
 
 
     const registerPatient = (data: DraftPatient) => {
-        addPatient(data)
+        if (activeID) {
+            updatePatient(data)
+        } else {
+            addPatient(data)
+        }
+
+        reset()
     }
+
+
 
     return (
         <div className="md:w-1/2 lg:w-2/5 mx-5">
@@ -40,11 +62,7 @@ export default function PatientForm() {
                         type="text"
                         placeholder="Nombre del Paciente"
                         {...register('name', {
-                            required: 'EL Nombre del paciente es obligatorio',
-                            maxLength: {
-                                value: 8,
-                                message: 'Máximo 8 Caracteres'
-                            }
+                            required: 'EL Nombre del paciente es obligatorio'
                         })}
                     />
                     {errors.name && (
